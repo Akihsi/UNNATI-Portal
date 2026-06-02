@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNNATI - Registration</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="top-bar py-2 d-none d-lg-block">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div class="top-contact">
+                <i class="fa-solid fa-envelope me-2"></i>
+                <a href="mailto:info@cbc.gov.in" class="text-decoration-none">info[at]cbc[dot]gov[dot]in</a>
+            </div>
+            <div class="top-social">
+                <a href="https://www.instagram.com/capacitybuildingcommission/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://www.facebook.com/people/Capacity-Building-Commission/61584606910279/?rdid=D4qCQQT6WmY33Esq&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1AQvydowQ9%2F" target="_blank" class="ms-3"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="https://x.com/CBC_MK" target="_blank" class="ms-3"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="https://www.linkedin.com/company/capacity-building-commission/" target="_blank" class="ms-3"><i class="fa-brands fa-linkedin-in"></i></a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Header (sticky) -->
+<header class="header sticky-header">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="https://unnati.cbc.gov.in/">
+                <img src="logo-unnati.png" alt="UNNATI Logo" class="logo-unnati">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="https://unnati.cbc.gov.in/"><i class="fa fa-home"></i></a></li>
+                    <li class="nav-item"><a class="nav-link" href="https://unnati.cbc.gov.in/about-us">About Us</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Services</a>
+                        <ul class="dropdown-menu services-dropdown">
+                            <li><a class="dropdown-item" href="https://unnati.cbc.gov.in/services/#infra-sharing"><span class="dd-icon"><i class="fas fa-server"></i></span><span>Infrastructure Sharing Ecosystem</span></a></li>
+                            <li><a class="dropdown-item" href="https://unnati.cbc.gov.in/services/#course-content"><span class="dd-icon"><i class="fas fa-book-open"></i></span><span>Course Content Library</span></a></li>
+                            <li><a class="dropdown-item" href="https://unnati.cbc.gov.in/services/#faculty-sharing"><span class="dd-icon"><i class="fas fa-users"></i></span><span>Faculty Sharing Pool</span></a></li>
+                            <li><a class="dropdown-item" href="https://unnati.cbc.gov.in/services/#accreditation"><span class="dd-icon"><i class="fas fa-certificate"></i></span><span>Accreditation</span></a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="https://unnati.cbc.gov.in/resources">Knowledge Repository</a></li>
+                    <li class="nav-item">
+                        <button class="btn login-btn" onclick="window.location.href='https://unnati.cbc.gov.in/login/';">Login</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container-fluid">
+        <div class="hero-wrapper hero-inner">
+            <div class="chakra-wrapper">
+                <img class="chakra-img-one" src="https://placehold.co/1200x400/1a237e/1a237e" alt="bg">
+                <img class="chakra-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.15'/%3E%3Ccircle cx='50' cy='50' r='35' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.15'/%3E%3Ccircle cx='50' cy='50' r='25' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.15'/%3E%3C/svg%3E" alt="chakra">
+            </div>
+            <div class="hero-overlay"></div>
+            <div class="row align-items-center hero-cont-wrap">
+                <div class="col-lg-12">
+                    <div class="hero-content text-center">
+                        <h2 class="mb-2">Subject Matter Expert Registration</h2>
+                        <p class="mb-0">Please enter the following details to register.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Registration Form -->
+<div class="login-container">
+    <div class="container">
+        <div class="login-form-container">
+            <form class="registration-form mt-3" id="registrationForm" novalidate>
+                <input type="hidden" name="csrfmiddlewaretoken" value="dummy-token">
+
+                <!-- ========== Section 1: Import Details ========== -->
+                <div class="section-box">
+                    <div class="section-header">
+                        <h5><i class="fas fa-download me-2"></i>Import Details</h5>
+                    </div>
+                    <p class="text-muted small mb-3">Choose how you'd like to import your information.</p>
+
+                    <div class="toggle-import mb-4">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="importSource" id="importLinkedin" value="linkedin" checked>
+                            <label class="form-check-label fw-medium" for="importLinkedin">
+                                <i class="fa-brands fa-linkedin me-1"></i> LinkedIn Profile URL
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="importSource" id="importCv" value="cv">
+                            <label class="form-check-label fw-medium" for="importCv">
+                                <i class="fas fa-file-upload me-1"></i> Upload CV
+                            </label>
+                        </div>
+                    </div>
+
+<div class="import-linkedin-field">
+
+    <div class="text-center py-3">
+
+        <button
+            type="button"
+            id="linkedinLoginBtn"
+            class="btn btn-primary btn-lg">
+
+            <i class="fab fa-linkedin me-2"></i>
+            Import from LinkedIn
+        </button>
+
+        <p class="small text-muted mt-3">
+            Sign in with LinkedIn to automatically fill your profile details.
+        </p>
+
+    </div>
+
+    <div id="linkedinImportStatus"></div>
+
+</div>
+
+<div class="import-cv-field" style="display:none;">
+    <div class="form-group mb-3">
+        <label class="form-label">Upload CV / Resume</label>
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-zone-content">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <p class="mb-1 fw-medium">Drag & drop your file here</p>
+                <p class="small text-muted mb-2">or</p>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="browseBtn">Browse Files</button>
+                <input type="file" id="cvFile" accept=".pdf,.doc,.docx" style="display:none;">
+                <p class="small text-muted mt-2 mb-0">Supported formats: PDF, DOC, DOCX (max 5MB)</p>
+            </div>
+            <div class="upload-zone-file" style="display:none;">
+                <i class="fas fa-file-pdf file-icon"></i>
+                <span class="file-name" id="fileName"></span>
+                <button type="button" class="btn btn-sm btn-link text-danger remove-file" id="removeFile"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <!-- Status message for CV parsing -->
+        <div class="import-status" id="cvImportStatus"></div>
+        <div class="error-msg" id="cvFile_error"></div>
+    </div>
+</div>
+                </div>
+
+                <!-- ========== Section 2: Personal Details ========== -->
+                <div class="section-box">
+                    <div class="section-header">
+                        <h5><i class="fas fa-user me-2"></i>Personal Details</h5>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="first_name" class="form-label">First Name*</label>
+                                <input type="text" class="form-control login-input" id="first_name" placeholder="Enter first name" required maxlength="50">
+                                <div class="char-counter"><span id="first_name_count">0</span>/50</div>
+                                <div class="error-msg" id="first_name_error"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="last_name" class="form-label">Last Name*</label>
+                                <input type="text" class="form-control login-input" id="last_name" placeholder="Enter last name" required maxlength="50">
+                                <div class="char-counter"><span id="last_name_count">0</span>/50</div>
+                                <div class="error-msg" id="last_name_error"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="personal_linkedin_url" class="form-label">LinkedIn Profile URL</label>
+                                <input type="url" class="form-control login-input" id="personal_linkedin_url" placeholder="https://www.linkedin.com/in/your-profile" maxlength="500">
+                                <div class="char-counter"><span id="personal_linkedin_url_count">0</span>/500</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="email_id" class="form-label">Email Id*</label>
+                                <input type="email" class="form-control login-input" id="email_id" placeholder="e.g., contact@institute.gov.in" required maxlength="150">
+                                <div class="char-counter"><span id="email_id_count">0</span>/150</div>
+                                <div class="error-msg" id="email_id_error"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="contact_number" class="form-label">Mobile Number*</label>
+                                <input type="tel" class="form-control login-input" id="contact_number" placeholder="Please enter mobile number" required maxlength="10">
+                                <div class="error-msg" id="contact_number_error"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<!-- ========== Section 3: Professional Details ========== -->
+<div class="section-box">
+    <div class="section-header">
+        <h5><i class="fas fa-briefcase me-2"></i>Professional Details</h5>
+    </div>
+    <div class="form-group mb-4">
+        <label for="area_of_expertise" class="form-label">Area of Expertise</label>
+        <textarea class="form-control login-input" id="area_of_expertise" rows="1" placeholder="Briefly describe your areas of expertise" maxlength="100"></textarea>
+        <div class="char-counter"><span id="area_of_expertise_count">0</span>/100</div>
+    </div>
+    <div class="form-group mb-4">
+        <label for="expertise_description" class="form-label">Expertise Description</label>
+        <textarea class="form-control login-input" id="expertise_description" rows="4" placeholder="Briefly describe your professional background and areas of expertise" maxlength="1000"></textarea>
+        <div class="char-counter"><span id="expertise_description_count">0</span>/1000</div>
+    </div>
+    <!-- CV Upload for Professional Details -->
+    <div class="form-group mb-3">
+        <label for="cv_upload_professional" class="form-label">Upload CV / Resume (Optional)</label>
+        <div class="input-group">
+            <input type="file" class="form-control login-input" id="cv_upload_professional" accept=".pdf,.doc,.docx" aria-describedby="cv_help">
+            <small id="cv_help" class="form-text text-muted d-block mt-1">Supported formats: PDF, DOC, DOCX (max 5MB). This CV will be stored with your registration.</small>
+        </div>
+        <div class="error-msg" id="cv_upload_professional_error"></div>
+        <div id="cv_upload_professional_status" class="mt-2"></div>
+    </div>
+</div>
+
+                <!-- ========== Section 4: Address Details ========== -->
+                <div class="section-box">
+                    <div class="section-header">
+                        <h5><i class="fas fa-map-marker-alt me-2"></i>Address Details</h5>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="address_of_institute" class="form-label">Address*</label>
+                        <textarea class="form-control login-input" id="address_of_institute" rows="3" placeholder="Enter complete address" required maxlength="500"></textarea>
+                        <div class="char-counter"><span id="address_of_institute_count">0</span>/500</div>
+                        <div class="error-msg" id="address_of_institute_error"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="state_id" class="form-label">State/UT*</label>
+                                <select class="form-control login-input" id="state_id" required>
+                                    <option value="">Select State/UT</option>
+                                </select>
+                                <div class="error-msg" id="state_id_error"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="district_id" class="form-label">District*</label>
+                                <select class="form-control login-input" id="district_id" required>
+                                    <option value="">Select District</option>
+                                </select>
+                                <div class="error-msg" id="district_id_error"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="city_name" class="form-label">City*</label>
+                                <input type="text" class="form-control login-input" id="city_name" required placeholder="Enter City" maxlength="100">
+                                <div class="char-counter"><span id="city_name_count">0</span>/100</div>
+                                <div class="error-msg" id="city_name_error"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label for="pin_code" class="form-label">Pin Code*</label>
+                                <input type="text" class="form-control login-input" id="pin_code" placeholder="e.g., 110001" required maxlength="6">
+                                <div class="error-msg" id="pin_code_error"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" id="submitBtn" class="btn btn-login-primary rounded-5">Submit Registration</button>
+                </div>
+            </form>
+<!-- Success Modal -->
+<div id="successModal" class="success-modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header success-header">
+            <h5 class="modal-title"><i class="fas fa-check-circle"></i> Registration Successful</h5>
+        </div>
+        <div class="modal-body">
+            <div class="success-message">
+                <p class="mb-3">Your registration has been submitted successfully!</p>
+                
+                <div class="registration-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Registration ID:</span>
+                        <span class="detail-value" id="registrationId">UNNS/20260602/N001</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-2" id="copyIdBtn">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Name:</span>
+                        <span class="detail-value" id="registrationName">-</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Email:</span>
+                        <span class="detail-value" id="registrationEmail">-</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4" role="alert">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Save your Registration ID</strong> — You'll need it to track your application.
+                    A confirmation email has been sent to your registered email address.
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="window.location.reload();">
+                <i class="fas fa-redo"></i> Register Another SME
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='/';">
+                <i class="fas fa-home"></i> Back to Home
+            </button>
+        </div>
+    </div>
+</div>
+            <div class="login-footer">
+                <p>Need help? Contact us at <a href="mailto:info@cbc.gov.in">info[at]cbc[dot]gov[dot]in</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer-main pt-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="footer-logo me-2">
+                        <img src="logo-unnati.png" alt="UNNATI">
+                    </div>
+                </div>
+                <p class="mb-1 foot-head">Unified New Age National Training Institute</p>
+                <p class="small text-muted">सक्षम कर्मयोगी, विकसित भारत</p>
+            </div>
+            <div class="col-lg-5 col-md-5">
+                <h6 class="fw-semibold mb-3">Contact Us</h6>
+                <ul class="list-unstyled footer-contact">
+                    <li>
+                        <svg width="18" height="15" viewBox="0 0 12 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.3327 6.00008C11.3327 9.32875 7.64002 12.7954 6.40002 13.8661C6.2845 13.9529 6.14388 13.9999 5.99935 13.9999C5.85482 13.9999 5.7142 13.9529 5.59868 13.8661C4.35868 12.7954 0.666016 9.32875 0.666016 6.00008C0.666016 4.58559 1.22792 3.22904 2.22811 2.22885C3.22831 1.22865 4.58486 0.666748 5.99935 0.666748C7.41384 0.666748 8.77039 1.22865 9.77059 2.22885C10.7708 3.22904 11.3327 4.58559 11.3327 6.00008Z" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 8.00024C7.10457 8.00024 8 7.10481 8 6.00024C8 4.89567 7.10457 4.00024 6 4.00024C4.89543 4.00024 4 4.89567 4 6.00024C4 7.10481 4.89543 8.00024 6 8.00024Z" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <a href="maps.app.goo.gl/wSqeFqYjMHDkebuFA" target="_blank" rel="noopener" style="color:#3b82f6; font-weight:600; text-decoration:none;">
+                            Capacity Building Commission, 19th, 20th & 21st Floor,<br> Jawahar Vyapar Bhavan, Tolstoy Road, New Delhi - 110001
+                        </a>
+                    </li>
+                    <li>
+                        <svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.334 0.666748H2.66732C1.93094 0.666748 1.33398 1.2637 1.33398 2.00008V10.0001C1.33398 10.7365 1.93094 11.3334 2.66732 11.3334H13.334C14.0704 11.3334 14.6673 10.7365 14.6673 10.0001V2.00008C14.6673 1.2637 14.0704 0.666748 13.334 0.666748Z" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.6673 2.66675L8.68732 6.46675C8.4815 6.5957 8.24353 6.66409 8.00065 6.66409C7.75777 6.66409 7.5198 6.5957 7.31398 6.46675L1.33398 2.66675" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        info[at]cbc[dot]gov[dot]in
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.6669 11.28V13.28C14.6677 13.4657 14.6297 13.6494 14.5553 13.8195C14.4809 13.9897 14.3718 14.1424 14.235 14.2679C14.0982 14.3934 13.9367 14.489 13.7608 14.5485C13.5849 14.6079 13.3985 14.63 13.2136 14.6133C11.1622 14.3904 9.19161 13.6894 7.46028 12.5667C5.8495 11.5431 4.48384 10.1774 3.46028 8.56665C2.3336 6.82745 1.63244 4.84731 1.41361 2.78665C1.39695 2.60229 1.41886 2.41649 1.47795 2.24107C1.53703 2.06564 1.63199 1.90444 1.75679 1.76773C1.88159 1.63102 2.03348 1.52179 2.20281 1.447C2.37213 1.37221 2.55517 1.33349 2.74028 1.33332H4.74028C5.06382 1.33013 5.37748 1.4447 5.62279 1.65567C5.8681 1.86664 6.02833 2.15961 6.07361 2.47998C6.15803 3.12003 6.31458 3.74847 6.54028 4.35332C6.62998 4.59193 6.64939 4.85126 6.59622 5.10057C6.54305 5.34988 6.41952 5.57872 6.24028 5.75998L5.39361 6.60665C6.34265 8.27568 7.72458 9.65761 9.39361 10.6067L10.2403 9.75998C10.4215 9.58074 10.6504 9.45722 10.8997 9.40405C11.149 9.35088 11.4083 9.37029 11.6469 9.45998C12.2518 9.68568 12.8802 9.84224 13.5203 9.92665C13.8441 9.97234 14.1399 10.1355 14.3513 10.385C14.5627 10.6345 14.6751 10.953 14.6669 11.28Z" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        +91 11 23701126
+                    </li>
+                </ul>
+            </div>
+            <div class="col-lg-3 col-md-3">
+                <h6 class="fw-semibold mb-3">Follow Us</h6>
+                <div class="footer-social mt-3">
+                    <a href="https://www.facebook.com/people/Capacity-Building-Commission/61584606910279/?rdid=D4qCQQT6WmY33Esq&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1AQvydowQ9%2F" target="_blank">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.9993 1.33325H9.99935C9.11529 1.33325 8.26745 1.68444 7.64233 2.30956C7.01721 2.93468 6.66602 3.78253 6.66602 4.66659V6.66659H4.66602V9.33325H6.66602V14.6666H9.33268V9.33325H11.3327L11.9993 6.66659H9.33268V4.66659C9.33268 4.48977 9.40292 4.32021 9.52794 4.19518C9.65297 4.07016 9.82254 3.99992 9.99935 3.99992H11.9993V1.33325Z" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+                    <a href="https://twitter.com/UNNATI_CBC" target="_blank">
+                        <svg width="16" height="16" viewBox="0 0 640 512" fill="#4A4A5B" xmlns="http://www.w3.org/2000/svg"><path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"/></svg>
+                    </a>
+                    <a href="https://www.linkedin.com/company/capacity-building-commission/" target="_blank">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.666 5.33325C11.7269 5.33325 12.7443 5.75468 13.4944 6.50482C14.2446 7.25497 14.666 8.27239 14.666 9.33325V13.9999H11.9993V9.33325C11.9993 8.97963 11.8589 8.64049 11.6088 8.39044C11.3588 8.14039 11.0196 7.99992 10.666 7.99992C10.3124 7.99992 9.97326 8.14039 9.72321 8.39044C9.47316 8.64049 9.33268 8.97963 9.33268 9.33325V13.9999H6.66602V9.33325C6.66602 8.27239 7.08744 7.25497 7.83759 6.50482C8.58773 5.75468 9.60515 5.33325 10.666 5.33325Z" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.00065 6H1.33398V14H4.00065V6Z" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.66732 3.99992C3.4037 3.99992 4.00065 3.40297 4.00065 2.66659C4.00065 1.93021 3.4037 1.33325 2.66732 1.33325C1.93094 1.33325 1.33398 1.93021 1.33398 2.66659C1.33398 3.40297 1.93094 3.99992 2.66732 3.99992Z" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+                    <a href="https://www.instagram.com/capacitybuildingcommission/" target="_blank">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.333" y="1.333" width="13.333" height="13.333" rx="4" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="3" stroke="#4A4A5B" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11.333" cy="4.667" r="0.667" fill="#4A4A5B"/></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom mt-5">
+        <div class="container-fluid d-flex justify-content-between flex-wrap">
+            <div class="small text-white">&copy; 2026 UNNATI — Capacity Building Commission</div>
+            <div class="small">
+                <a href="https://unnati.cbc.gov.in/privacy-policy/">Privacy Policy</a>
+                <a href="https://unnati.cbc.gov.in/terms-of-use/">Terms of Service</a>
+                <a href="https://unnati.cbc.gov.in/contact/">Contact</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
