@@ -3,6 +3,7 @@ from django.shortcuts import redirect
 from django.conf import settings
 import requests
 from django.http import JsonResponse
+import json
 # Create your views here.
 import re
 from rest_framework import status
@@ -225,8 +226,19 @@ def register(request):
         # Validate input
         serializer = RegistrationCreateSerializer(data=request.data)
         if not serializer.is_valid():
+    # Flatten all field errors into one readable string for the frontend
+            flat_errors = []
+            for field, errors in serializer.errors.items():
+                for error in errors:
+                    flat_errors.append(f"{field}: {error}")
+            readable = ' | '.join(flat_errors)
+            logger.warning(f"Registration validation failed: {serializer.errors}")
             return Response(
-                {'success': False, 'errors': serializer.errors},
+                {
+                    'success': False,
+                    'message': readable,          # JS alert() will now show this
+                    'errors': serializer.errors   # keep for debugging
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -339,7 +351,7 @@ def linkedin_callback(request):
         window.opener.postMessage(
             {{
                 type: "linkedin_profile",
-                profile: {profile}
+                profile: {json.dumps(profile)}
             }},
             "http://localhost:8080"
         );

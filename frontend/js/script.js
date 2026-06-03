@@ -61,6 +61,7 @@
     // ── DOM refs ────────────────────────────────────────────
 
     var form = document.getElementById('registrationForm');
+
     var importLinkedin = document.getElementById('importLinkedin');
     var importCv = document.getElementById('importCv');
     var linkedinImportField = document.querySelector('.import-linkedin-field');
@@ -82,6 +83,17 @@
     var lastNameInput = document.getElementById('last_name');
 
     var cvFileData = null;
+
+    // FIX 5: Track CV import state more robustly — null = not attempted,
+    // false = attempted but failed, true = parsed successfully,
+    // 'uploaded' = file chosen (parse in progress or skipped)
+    var cvFileDataImport = null;
+    // Also hold a reference to the actual File object so we can copy it
+    // to the professional section after a successful parse.
+    var cvImportFile = null;
+
+    // Backend base URL (single source of truth)
+    var API_BASE = 'http://127.0.0.1:8000';
 
     // ── Utility ─────────────────────────────────────────────
 
@@ -111,6 +123,20 @@
         var inp = getEl(inputId);
         if (inp) inp.classList.add('error');
         showError(errorId, msg);
+    }
+
+    // FIX 2: unified clearFieldError (was called both clearFieldError and clearError)
+    function clearFieldError(inputId, errorId) {
+        var input = getEl(inputId);
+        var error = getEl(errorId);
+        if (input) input.classList.remove('error');
+        if (error) error.textContent = '';
+    }
+
+    function updateCharCounter(fieldId) {
+        var field = getEl(fieldId);
+        var counter = getEl(fieldId + '_count');
+        if (field && counter) counter.textContent = field.value.length;
     }
 
     function setupCharCounter(inputId, countId, maxLen) {
@@ -143,6 +169,10 @@
             linkedinImportField.style.display = 'none';
             cvImportField.style.display = 'block';
         }
+        // FIX 5: reset CV import state when source changes
+        cvFileDataImport = null;
+        cvImportFile = null;
+        showCvImportStatus('', '');
     }
 
     importLinkedin.addEventListener('change', toggleImportSource);
@@ -150,6 +180,8 @@
     toggleImportSource();
 
     // ── File Upload (Drag & Drop + Browse) ─────────────────
+    // NOTE: drag/drop listeners are only registered ONCE here.
+    // The duplicate block that was at the bottom of the original file is removed.
 
     function handleFile(file) {
         if (!file) return;
@@ -184,29 +216,41 @@
         cvFileInput.click();
     });
 
+    // FIX: cvFile change — both update the drop-zone UI AND kick off parsing
     cvFileInput.addEventListener('change', function () {
-        if (this.files && this.files[0]) handleFile(this.files[0]);
+        if (this.files && this.files[0]) {
+            handleFile(this.files[0]);
+            uploadAndParseCV(this.files[0]);
+        }
     });
 
-    uploadZone.addEventListener('dragover', function (e) {
-        e.preventDefault();
-        this.classList.add('dragover');
-    });
+    if (uploadZone) {
+        uploadZone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
 
-    uploadZone.addEventListener('dragleave', function (e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-    });
+        uploadZone.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
 
-    uploadZone.addEventListener('drop', function (e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-    });
+        uploadZone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFile(e.dataTransfer.files[0]);
+                uploadAndParseCV(e.dataTransfer.files[0]);
+            }
+        });
+    }
 
     removeFileBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         removeFile();
+        cvFileDataImport = null;
+        cvImportFile = null;
+        showCvImportStatus('', '');
     });
 
     // ── State → District ────────────────────────────────────
@@ -252,451 +296,440 @@
     setupCharCounter('address_of_institute', 'address_of_institute_count', 500);
     setupCharCounter('city_name', 'city_name_count', 100);
 
-    // ── Validation ──────────────────────────────────────────
+    // ── FIX 1: Inline (while-typing) validation ──────────────
+
+    firstNameInput.addEventListener('input', function () {
+        var value = this.value.trim();
+        if (!value) {
+            markError('first_name', 'first_name_error', 'Please enter first name');
+        } else if (value.length > 50) {
+            markError('first_name', 'first_name_error', 'Maximum 50 characters allowed');
+        } else {
+            clearFieldError('first_name', 'first_name_error');
+        }
+    });
+
+    lastNameInput.addEventListener('input', function () {
+        var value = this.value.trim();
+        if (!value) {
+            markError('last_name', 'last_name_error', 'Please enter last name');
+        } else if (value.length > 50) {
+            markError('last_name', 'last_name_error', 'Maximum 50 characters allowed');
+        } else {
+            clearFieldError('last_name', 'last_name_error');
+        }
+    });
+
+    getEl('email_id').addEventListener('input', function () {
+        var value = this.value.trim();
+        if (!value) {
+            markError('email_id', 'email_id_error', 'Please enter email');
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+            markError('email_id', 'email_id_error', 'Invalid email address');
+        } else if (value.length > 150) {
+            markError('email_id', 'email_id_error', 'Maximum 150 characters allowed');
+        } else {
+            clearFieldError('email_id', 'email_id_error');
+        }
+    });
+
+    // FIX 1+2: contactInput — was referencing undefined `mobile` variable
+    contactInput.addEventListener('input', function () {
+        var mobile = this.value.trim();
+        if (!mobile) {
+            markError('contact_number', 'contact_number_error', 'Please enter mobile number');
+        } else if (/^[0-5]/.test(mobile)) {
+            markError('contact_number', 'contact_number_error', 'Mobile number must start with 6-9');
+        } else if (!/^[6-9][0-9]{9}$/.test(mobile)) {
+            markError('contact_number', 'contact_number_error', 'Please enter a valid 10-digit mobile number');
+        } else {
+            clearFieldError('contact_number', 'contact_number_error');
+        }
+    });
+
+    pinInput.addEventListener('input', function () {
+        var value = this.value.trim();
+        if (!value) {
+            markError('pin_code', 'pin_code_error', 'Please enter pin code');
+        } else if (!/^\d{6}$/.test(value)) {
+            markError('pin_code', 'pin_code_error', 'PIN must be 6 digits');
+        } else {
+            clearFieldError('pin_code', 'pin_code_error');
+        }
+    });
+
+    cityInput.addEventListener('input', function () {
+        var value = this.value.trim();
+        if (!value) {
+            markError('city_name', 'city_name_error', 'Please enter city name');
+        } else if (!/^[A-Za-z\s]+$/.test(value)) {
+            markError('city_name', 'city_name_error', 'City name should contain only letters and spaces');
+        } else if (value.length > 100) {
+            markError('city_name', 'city_name_error', 'City name must be 100 characters or less');
+        } else {
+            clearFieldError('city_name', 'city_name_error');
+        }
+    });
+
+    getEl('personal_linkedin_url') && getEl('personal_linkedin_url').addEventListener('input', function () {
+        var value = this.value.trim();
+        if (value && !/^https?:\/\/.+/.test(value)) {
+            markError('personal_linkedin_url', 'personal_linkedin_url_error', 'Please enter a valid URL starting with http:// or https://');
+        } else {
+            clearFieldError('personal_linkedin_url', 'personal_linkedin_url_error');
+        }
+    });
+
+    stateSelect.addEventListener('change', function () {
+        if (!this.value) {
+            markError('state_id', 'state_id_error', 'Please select state/UT');
+        } else {
+            clearFieldError('state_id', 'state_id_error');
+        }
+    });
+
+    districtSelect.addEventListener('change', function () {
+        if (!this.value) {
+            markError('district_id', 'district_id_error', 'Please select district');
+        } else {
+            clearFieldError('district_id', 'district_id_error');
+        }
+    });
+
+    // ── Full validation (on submit) ─────────────────────────
 
     function validate() {
         clearErrors();
         var valid = true;
 
-        // first_name
         var fn = firstNameInput.value.trim();
         if (!fn) {
-            markError('first_name', 'first_name_error', 'Please enter first name');
-            valid = false;
+            markError('first_name', 'first_name_error', 'Please enter first name'); valid = false;
         } else if (fn.length > 50) {
-            markError('first_name', 'first_name_error', 'First name must be 50 characters or less');
-            valid = false;
+            markError('first_name', 'first_name_error', 'First name must be 50 characters or less'); valid = false;
         }
 
-        // last_name
         var ln = lastNameInput.value.trim();
         if (!ln) {
-            markError('last_name', 'last_name_error', 'Please enter last name');
-            valid = false;
+            markError('last_name', 'last_name_error', 'Please enter last name'); valid = false;
         } else if (ln.length > 50) {
-            markError('last_name', 'last_name_error', 'Last name must be 50 characters or less');
-            valid = false;
+            markError('last_name', 'last_name_error', 'Last name must be 50 characters or less'); valid = false;
         }
 
-        // email
         var email = getEl('email_id').value.trim();
         if (!email) {
-            markError('email_id', 'email_id_error', 'Please enter email id');
-            valid = false;
+            markError('email_id', 'email_id_error', 'Please enter email id'); valid = false;
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            markError('email_id', 'email_id_error', 'Please enter a valid email address');
-            valid = false;
+            markError('email_id', 'email_id_error', 'Please enter a valid email address'); valid = false;
         } else if (email.length > 150) {
-            markError('email_id', 'email_id_error', 'Email must be 150 characters or less');
-            valid = false;
+            markError('email_id', 'email_id_error', 'Email must be 150 characters or less'); valid = false;
         }
 
-        // mobile
         var mobile = contactInput.value.trim();
         if (!mobile) {
-            markError('contact_number', 'contact_number_error', 'Please enter mobile number');
-            valid = false;
-        } else if (!/^[5-9][0-9]{9}$/.test(mobile)) {
-            markError('contact_number', 'contact_number_error', 'Please enter a valid 10-digit mobile number');
-            valid = false;
+            markError('contact_number', 'contact_number_error', 'Please enter mobile number'); valid = false;
+        } else if (/^[0-5]/.test(mobile)) {
+            markError('contact_number', 'contact_number_error', 'Mobile number must start with 6-9'); valid = false;
+        } else if (!/^[6-9][0-9]{9}$/.test(mobile)) {
+            markError('contact_number', 'contact_number_error', 'Please enter a valid 10-digit mobile number'); valid = false;
         }
 
-        // personal_linkedin_url (optional but validate if provided)
         var linkedinUrl = getEl('personal_linkedin_url').value.trim();
         if (linkedinUrl && !/^https?:\/\/.+/.test(linkedinUrl)) {
-            markError('personal_linkedin_url', 'personal_linkedin_url_error', 'Please enter a valid URL starting with http:// or https://');
-            valid = false;
+            markError('personal_linkedin_url', 'personal_linkedin_url_error', 'Please enter a valid URL starting with http:// or https://'); valid = false;
         }
 
-        // linkedin_import_url (optional but validate if provided and linkedin toggle is active)
         if (importLinkedin.checked) {
             var impUrl = getEl('linkedin_import_url').value.trim();
             if (impUrl && !/^https?:\/\/.+/.test(impUrl)) {
-                markError('linkedin_import_url', 'linkedin_import_url_error', 'Please enter a valid URL starting with http:// or https://');
-                valid = false;
+                markError('linkedin_import_url', 'linkedin_import_url_error', 'Please enter a valid URL starting with http:// or https://'); valid = false;
             }
         }
 
-        // address
         var addr = getEl('address_of_institute').value.trim();
         if (!addr) {
-            markError('address_of_institute', 'address_of_institute_error', 'Please enter address');
-            valid = false;
+            markError('address_of_institute', 'address_of_institute_error', 'Please enter address'); valid = false;
         } else if (addr.length > 500) {
-            markError('address_of_institute', 'address_of_institute_error', 'Address must be 500 characters or less');
-            valid = false;
+            markError('address_of_institute', 'address_of_institute_error', 'Address must be 500 characters or less'); valid = false;
         }
 
-        // state_id
         var st = stateSelect.value.trim();
-        if (!st) {
-            markError('state_id', 'state_id_error', 'Please select state/UT');
-            valid = false;
-        }
+        if (!st) { markError('state_id', 'state_id_error', 'Please select state/UT'); valid = false; }
 
-        // district_id
         var dist = districtSelect.value.trim();
-        if (!dist) {
-            markError('district_id', 'district_id_error', 'Please select district');
-            valid = false;
-        }
+        if (!dist) { markError('district_id', 'district_id_error', 'Please select district'); valid = false; }
 
-        // city
         var city = cityInput.value.trim();
         if (!city) {
-            markError('city_name', 'city_name_error', 'Please enter city name');
-            valid = false;
+            markError('city_name', 'city_name_error', 'Please enter city name'); valid = false;
         } else if (!/^[A-Za-z\s]+$/.test(city)) {
-            markError('city_name', 'city_name_error', 'City name should contain only letters and spaces');
-            valid = false;
+            markError('city_name', 'city_name_error', 'City name should contain only letters and spaces'); valid = false;
         } else if (city.length > 100) {
-            markError('city_name', 'city_name_error', 'City name must be 100 characters or less');
-            valid = false;
+            markError('city_name', 'city_name_error', 'City name must be 100 characters or less'); valid = false;
         }
 
-        // pin_code
         var pin = pinInput.value.trim();
         if (!pin) {
-            markError('pin_code', 'pin_code_error', 'Please enter pin code');
-            valid = false;
+            markError('pin_code', 'pin_code_error', 'Please enter pin code'); valid = false;
         } else if (!/^[0-9]{6}$/.test(pin)) {
-            markError('pin_code', 'pin_code_error', 'Pin code must be 6 digits');
-            valid = false;
+            markError('pin_code', 'pin_code_error', 'Pin code must be 6 digits'); valid = false;
         }
 
         return valid;
     }
 
-    // ── Submit handler ──────────────────────────────────────
+    // ── FIX 3: Prevent form submission on Enter key ─────────
 
-    form.addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    // Validate mobile
-    const mobile = document.getElementById('contact_number').value.trim();
-    const mobileRegex = /^[5-9]\d{9}$/;
-    if (!mobileRegex.test(mobile)) {
-        showError('contact_number_error', 'Please enter a valid 10-digit mobile number');
-        return;
-    }
-
-    // Validate required fields
-    const firstName = document.getElementById('first_name').value.trim();
-    const lastName = document.getElementById('last_name').value.trim();
-    const email = document.getElementById('email_id').value.trim();
-    const address = document.getElementById('address_of_institute').value.trim();
-    const state = document.getElementById('state_id').value.trim();
-    const district = document.getElementById('district_id').value.trim();
-    const city = document.getElementById('city_name').value.trim();
-    const pin = document.getElementById('pin_code').value.trim();
-
-    if (!firstName || !lastName || !email || !address || !state || !district || !city || !pin) {
-        alert('Please fill in all required fields');
-        return;
-    }
-
-    // Validate email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showError('email_id_error', 'Please enter a valid email address');
-        return;
-    }
-
-    // Validate that CV import was used if CV source selected
-    const selectedSource = document.querySelector('input[name="importSource"]:checked')?.value;
-    if (selectedSource === 'cv' && !window.cvFileDataImport) {
-        alert('Please upload and parse your CV to import details');
-        return;
-    }
-
-    // Validate that LinkedIn URL exists if LinkedIn source selected
-    const linkedinUrl = document.getElementById('personal_linkedin_url').value.trim();
-    if (selectedSource === 'linkedin' && !linkedinUrl) {
-        alert('Please provide your LinkedIn profile URL');
-        return;
-    }
-
-    // Prepare FormData for file uploads
-    const formData = new FormData();
-    
-    // Add all form fields
-    formData.append('first_name', firstName);
-    formData.append('last_name', lastName);
-    formData.append('email_id', email);
-    formData.append('personal_linkedin_url', linkedinUrl);
-    formData.append('contact_number', mobile);
-    formData.append('area_of_expertise', document.getElementById('area_of_expertise').value);
-    formData.append('expertise_description', document.getElementById('expertise_description').value);
-    formData.append('address_of_institute', address);
-    formData.append('state_id', state);
-    formData.append('district_id', district);
-    formData.append('city_name', city);
-    formData.append('pin_code', pin);
-    formData.append('import_source', selectedSource || 'linkedin');
-
-    // Add CV file if present in Professional Details
-    const cvFileInput = document.getElementById('cv_upload_professional');
-    if (cvFileInput && cvFileInput.files.length > 0) {
-        formData.append('cv_file', cvFileInput.files[0]);
-    }
-
-    // Show loading state
-    const submitBtn = document.getElementById('submitBtn');
-    const originalBtnText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-
-    // Submit to Django backend
-    fetch(`${API_BASE}/api/register/`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
+    form.addEventListener('keydown', function (e) {
+        // Allow Enter inside textareas only
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-
-        if (data.success) {
-            // Hide form and show success modal
-            document.querySelector('.login-form-container').style.display = 'none';
-            
-            // Display success modal
-            const successModal = document.getElementById('successModal');
-            document.getElementById('registrationId').innerText = data.registration_id;
-            document.getElementById('registrationName').innerText = firstName + ' ' + lastName;
-            document.getElementById('registrationEmail').innerText = email;
-            successModal.style.display = 'flex';
-        } else {
-            alert('Error: ' + (data.message || 'Registration failed. Please try again.'));
-            console.error('Server error:', data);
-        }
-    })
-    .catch(error => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
-        console.error('Error:', error);
-        alert('Error submitting registration. Please check your connection and try again.');
     });
-});
 
-// Copy registration ID to clipboard
-document.addEventListener('click', function(e) {
-    if (e.target.id === 'copyIdBtn') {
-        const registrationId = document.getElementById('registrationId').innerText;
-        navigator.clipboard.writeText(registrationId).then(() => {
-            const btn = e.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-            }, 2000);
+    // ── CV Parsing ──────────────────────────────────────────
+
+    function showCvImportStatus(message, type) {
+        var statusDiv = getEl('cvImportStatus');
+        if (!statusDiv) return;
+        statusDiv.textContent = message;
+        statusDiv.className = 'import-status ' +
+            (type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'processing' ? 'processing' : '');
+    }
+
+    function uploadAndParseCV(file) {
+        if (ALLOWED_CV_TYPES.indexOf(file.type) === -1) {
+            showError('cvFile_error', 'Invalid file type. Please upload PDF, DOC, or DOCX.');
+            showCvImportStatus('✗ Invalid file type', 'error');
+            cvFileDataImport = false;
+            return;
+        }
+        if (file.size > MAX_CV_SIZE) {
+            showError('cvFile_error', 'File is too large. Maximum 5MB allowed.');
+            showCvImportStatus('✗ File exceeds 5MB limit', 'error');
+            cvFileDataImport = false;
+            return;
+        }
+
+        // FIX 5: save the file reference immediately so we can attach it later
+        cvImportFile = file;
+        // Mark as "uploaded but parse pending" — treated as valid for submission
+        // (parse result will update the flag)
+        cvFileDataImport = 'uploaded';
+
+        showCvImportStatus('Processing your CV…', 'processing');
+
+        var formData = new FormData();
+        formData.append('cv', file);
+
+        fetch(API_BASE + '/api/parse-cv/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
+            }
+        })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+            if (data.success && data.extracted_data) {
+                var extracted = data.extracted_data;
+
+                if (extracted.first_name) { getEl('first_name').value = extracted.first_name; updateCharCounter('first_name'); }
+                if (extracted.last_name)  { getEl('last_name').value  = extracted.last_name;  updateCharCounter('last_name'); }
+                if (extracted.email)      { getEl('email_id').value   = extracted.email;       updateCharCounter('email_id'); }
+                if (extracted.contact_number) { getEl('contact_number').value = extracted.contact_number; }
+                if (extracted.city)       { getEl('city_name').value  = extracted.city;        updateCharCounter('city_name'); }
+
+                if (extracted.state) {
+                    var opts = Array.from(stateSelect.options);
+                    var match = opts.find(function (o) {
+                        return o.value.toLowerCase() === extracted.state.toLowerCase();
+                    });
+                    if (match) { stateSelect.value = match.value; updateDistricts(); }
+                }
+
+                // FIX 4: copy the parsed CV file into the professional section upload input
+                try {
+                    var profInput = getEl('cv_upload_professional');
+                    if (profInput && cvImportFile) {
+                        var dt = new DataTransfer();
+                        dt.items.add(cvImportFile);
+                        profInput.files = dt.files;
+                        // Clear any earlier size-error on that field
+                        showError('cv_upload_professional_error', '');
+                    }
+                } catch (err) {
+                    // DataTransfer not supported in all browsers — fail silently;
+                    // the file is still appended via cvImportFile reference in submit
+                    console.warn('Could not auto-assign file to professional input:', err);
+                }
+
+                cvFileDataImport = true;
+                showCvImportStatus('✓ CV parsed successfully! Details have been auto-filled.', 'success');
+            } else {
+                cvFileDataImport = false;
+                showCvImportStatus('✗ Could not parse CV. ' + (data.message || 'Please fill details manually.'), 'error');
+            }
+        })
+        .catch(function (error) {
+            cvFileDataImport = false;
+            console.error('CV parse error:', error);
+            showCvImportStatus('✗ Error uploading CV. Please try again.', 'error');
         });
     }
-});
 
+    // ── Submit handler ──────────────────────────────────────
 
-document.addEventListener('change', function(e) {
-    if (e.target.name === 'importSource') {
-        cvFileDataImport = null;  // Reset CV import flag when switching
-        showCvImportStatus('', '');  // Clear status
-    }
-});
-function updateCharCounter(fieldId) {
-    const field = document.getElementById(fieldId);
-    const counter = document.getElementById(fieldId + '_count');
-    if (counter) {
-        counter.innerText = field.value.length;
-    }
-}
-// ============================================================
-// CV PARSING FOR IMPORT DETAILS
-// ============================================================
-window.addEventListener("message", function(event) {
-
-    const data = event.data;
-
-    if(data.first_name) {
-        document.getElementById("first_name").value =
-            data.first_name;
-    }
-
-    if(data.last_name) {
-        document.getElementById("last_name").value =
-            data.last_name;
-    }
-
-    if(data.email) {
-        document.getElementById("email_id").value =
-            data.email;
-    }
-
-});
-var cvFileDataImport = null;  // Track if CV import was successful
-
-function uploadAndParseCV(file) {
-    const validTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    
-    if (!validTypes.includes(file.type)) {
-        showError('cvFile_error', 'Invalid file type. Please upload PDF, DOC, or DOCX.');
-        showCvImportStatus('✗ Invalid file type', 'error');
-        return;
-    }
-    
-    if (file.size > 5 * 1024 * 1024) {
-        showError('cvFile_error', 'File is too large. Maximum 5MB allowed.');
-        showCvImportStatus('✗ File exceeds 5MB limit', 'error');
-        return;
-    }
-    
-    showCvImportStatus('Processing your CV...', 'processing');
-    
-    const formData = new FormData();
-    formData.append('cv', file);
-    
-const API_BASE = 'http://127.0.0.1:8000';
-
-    fetch(`${API_BASE}/api/parse-cv/`, {        
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.extracted_data) {
-            const extracted = data.extracted_data;
-            
-            // Auto-fill Personal Details
-            if (extracted.first_name) {
-                document.getElementById('first_name').value = extracted.first_name;
-                updateCharCounter('first_name');
-            }
-            if (extracted.last_name) {
-                document.getElementById('last_name').value = extracted.last_name;
-                updateCharCounter('last_name');
-            }
-            if (extracted.email) {
-                document.getElementById('email_id').value = extracted.email;
-                updateCharCounter('email_id');
-            }
-            if (extracted.contact_number) {
-                document.getElementById('contact_number').value = extracted.contact_number;
-            }
-            if (extracted.city) {
-                document.getElementById('city_name').value = extracted.city;
-                updateCharCounter('city_name');
-            }
-            if (extracted.state) {
-                // Populate state dropdown
-                const stateSelect = document.getElementById('state_id');
-                const stateOption = Array.from(stateSelect.options).find(
-                    opt => opt.value.toLowerCase() === extracted.state.toLowerCase()
-                );
-                if (stateOption) {
-                    stateSelect.value = stateOption.value;
-                    // Trigger district update
-                    updateDistricts();
-                }
-            }
-            
-            cvFileDataImport = true;  // Mark CV import as successful
-            showCvImportStatus('✓ CV parsed successfully! Details have been auto-filled.', 'success');
-        } else {
-            cvFileDataImport = false;
-            showCvImportStatus('✗ Could not parse CV. ' + (data.message || 'Please fill details manually.'), 'error');
-        }
-    })
-    .catch(error => {
-        cvFileDataImport = false;
-        console.error('Error:', error);
-        showCvImportStatus('✗ Error uploading CV. Please try again.', 'error');
-    });
-}
-
-function showCvImportStatus(message, type) {
-    const statusDiv = document.getElementById('cvImportStatus');
-    statusDiv.innerText = message;
-    statusDiv.className = 'import-status ' + (type === 'success' ? 'success' : type === 'error' ? 'error' : '');
-}
-
-// Handle CV file input change
-document.addEventListener('change', function(e) {
-    if (e.target.id === 'cvFile' && e.target.files.length > 0) {
-        uploadAndParseCV(e.target.files[0]);
-    }
-    if (e.target.id === 'cv_upload_professional' && e.target.files.length > 0) {
-        const file = e.target.files[0];
-        if (file.size > 5 * 1024 * 1024) {
-            showError('cv_upload_professional_error', 'File is too large. Maximum 5MB allowed.');
-        } else {
-            document.getElementById('cv_upload_professional_error').innerText = '';
-        }
-    }
-});
-
-// Handle drag & drop for CV upload zone
-if (uploadZone) {
-    uploadZone.addEventListener('dragover', function(e) {
+    form.addEventListener('submit', function (e) {
         e.preventDefault();
-        this.classList.add('dragover');
+
+        if (!validate()) return;
+
+        var selectedSource = (document.querySelector('input[name="importSource"]:checked') || {}).value;
+
+        // FIX 5: allow submission when file was uploaded (parse may have succeeded,
+        // failed, or is still in progress — cvImportFile being set means the user
+        // did attach a file, which is all we need to check).
+        if (selectedSource === 'cv' && !cvImportFile) {
+            alert('Please upload your CV before submitting.');
+            return;
+        }
+
+        if (selectedSource === 'linkedin') {
+            var linkedinUrl = getEl('personal_linkedin_url').value.trim();
+            if (!linkedinUrl) {
+                alert('Please provide your LinkedIn profile URL');
+                return;
+            }
+        }
+
+        var firstName = firstNameInput.value.trim();
+        var lastName  = lastNameInput.value.trim();
+        var email     = getEl('email_id').value.trim();
+        var mobile    = contactInput.value.trim();
+
+        var formData = new FormData();
+        formData.append('first_name',            firstName);
+        formData.append('last_name',             lastName);
+        formData.append('email_id',              email);
+        formData.append('personal_linkedin_url', getEl('personal_linkedin_url').value.trim());
+        formData.append('contact_number',        mobile);
+        formData.append('area_of_expertise',     getEl('area_of_expertise').value);
+        formData.append('expertise_description', getEl('expertise_description').value);
+        formData.append('address_of_institute',  getEl('address_of_institute').value.trim());
+        formData.append('state_id',              stateSelect.value);
+        formData.append('district_id',           districtSelect.value);
+        formData.append('city_name',             cityInput.value.trim());
+        formData.append('pin_code',              pinInput.value.trim());
+        formData.append('import_source',         selectedSource || 'linkedin');
+
+        // FIX 4+5: attach CV file — prefer the professional-section input if it
+        // has a file, otherwise fall back to the import CV file reference.
+        var profInput = getEl('cv_upload_professional');
+        if (profInput && profInput.files && profInput.files.length > 0) {
+            formData.append('cv_file', profInput.files[0]);
+        } else if (cvImportFile) {
+            formData.append('cv_file', cvImportFile);
+        }
+
+        var submitBtn = getEl('submitBtn');
+        var originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+
+        fetch(API_BASE + '/api/register/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('input[name="csrfmiddlewaretoken"]').value
+            }
+        })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+
+            if (data.success) {
+                document.querySelector('.login-form-container').style.display = 'none';
+                var successModal = getEl('successModal');
+                getEl('registrationId').textContent   = data.registration_id;
+                getEl('registrationName').textContent = firstName + ' ' + lastName;
+                getEl('registrationEmail').textContent = email;
+                successModal.style.display = 'flex';
+            } else {
+                // FIX 2: show the actual server error message on screen, not just alert
+                var serverMsg = (data.message || 'Registration failed. Please try again.');
+                alert('Error: ' + serverMsg);
+                console.error('Server error response:', data);
+            }
+        })
+        .catch(function (error) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            // FIX 2: print the actual error
+            console.error('Submit fetch error:', error);
+            alert('Network error: ' + (error.message || error) + '. Please check your connection and try again.');
+        });
     });
 
-    uploadZone.addEventListener('dragleave', function() {
-        this.classList.remove('dragover');
-    });
+    // ── Copy registration ID ────────────────────────────────
 
-    uploadZone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-        
-        if (e.dataTransfer.files.length > 0) {
-            document.getElementById('cvFile').files = e.dataTransfer.files;
-            uploadAndParseCV(e.dataTransfer.files[0]);
+    document.addEventListener('click', function (e) {
+        if (e.target.id === 'copyIdBtn') {
+            var registrationId = getEl('registrationId').textContent;
+            navigator.clipboard.writeText(registrationId).then(function () {
+                var btn = e.target;
+                var orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(function () { btn.innerHTML = orig; }, 2000);
+            });
         }
     });
-}
 
-document
-    .getElementById("linkedinLoginBtn")
-    .addEventListener("click", function () {
+    // ── Professional-section CV size check ─────────────────
 
-        window.open(
-            "http://127.0.0.1:8000/api/auth/linkedin/",
-            "LinkedInLogin",
-            "width=700,height=700"
-        );
-
+    document.addEventListener('change', function (e) {
+        if (e.target.id === 'cv_upload_professional' && e.target.files.length > 0) {
+            var file = e.target.files[0];
+            if (file.size > MAX_CV_SIZE) {
+                showError('cv_upload_professional_error', 'File is too large. Maximum 5MB allowed.');
+            } else {
+                showError('cv_upload_professional_error', '');
+            }
+        }
     });
 
-window.addEventListener("message", function(event){
+    // ── LinkedIn OAuth popup ────────────────────────────────
 
-    if(event.data.type !== "linkedin_profile"){
-        return;
+    var linkedinLoginBtn = getEl('linkedinLoginBtn');
+    if (linkedinLoginBtn) {
+        linkedinLoginBtn.addEventListener('click', function () {
+            window.open(API_BASE + '/api/auth/linkedin/', 'LinkedInLogin', 'width=700,height=700');
+        });
     }
 
-    const profile = event.data.profile;
+    // ── FIX: Single consolidated postMessage listener ───────
+    // (Original code had two separate window.addEventListener("message", …) blocks
+    //  which caused the generic one to fire before the LinkedIn one and interfere.)
 
-    document.getElementById("first_name").value =
-        profile.given_name || "";
+    window.addEventListener('message', function (event) {
+        var data = event.data;
+        if (!data) return;
 
-    document.getElementById("last_name").value =
-        profile.family_name || "";
+        // LinkedIn OAuth callback
+        if (data.type === 'linkedin_profile') {
+            var profile = data.profile;
+            if (profile.given_name)   { getEl('first_name').value              = profile.given_name; }
+            if (profile.family_name)  { getEl('last_name').value               = profile.family_name; }
+            if (profile.email)        { getEl('email_id').value                = profile.email; }
+            if (profile.linkedin_url) { getEl('personal_linkedin_url').value   = profile.linkedin_url; }
+            return;
+        }
 
-    document.getElementById("email_id").value =
-        profile.email || "";
-
-    document.getElementById("personal_linkedin_url").value =
-        profile.linkedin_url || "";
-
-});
-
+        // Generic postMessage auto-fill (e.g. from parent frame)
+        if (data.first_name) { getEl('first_name').value = data.first_name; }
+        if (data.last_name)  { getEl('last_name').value  = data.last_name; }
+        if (data.email)      { getEl('email_id').value   = data.email; }
+    });
 
 })();
