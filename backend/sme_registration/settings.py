@@ -155,7 +155,7 @@ REST_FRAMEWORK = {
 
 LINKEDIN_CLIENT_ID = "clientid"
 
-LINKEDIN_CLIENT_SECRET = "yoursecretclient"
+LINKEDIN_CLIENT_SECRET = "secretclient"
 
 LINKEDIN_REDIRECT_URI = "http://127.0.0.1:8000/api/auth/linkedin/callback/"
 

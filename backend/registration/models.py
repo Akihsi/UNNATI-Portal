@@ -4,7 +4,7 @@ import os
 
 class SMERegistration(models.Model):
     # Primary identifier
-    registration_id = models.CharField(max_length=30, unique=True, db_index=True)
+    registration_id = models.CharField(max_length=30, unique=True, db_index=True, primary_key=True)
     
     # Personal Details
     first_name = models.CharField(max_length=50)

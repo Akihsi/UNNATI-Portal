@@ -561,15 +561,7 @@ function uploadAndParseCV(file) {
     formData.append('cv', file);
     
 const API_BASE = 'http://127.0.0.1:8000';
-document
-.getElementById('linkedinLoginBtn')
-.addEventListener('click', function () {
 
-    window.location.href =
-        API_BASE +
-        '/api/auth/linkedin/';
-
-});
     fetch(`${API_BASE}/api/parse-cv/`, {        
         method: 'POST',
         body: formData,
@@ -671,22 +663,40 @@ if (uploadZone) {
         }
     });
 }
-document.addEventListener("DOMContentLoaded", function () {
 
-    const linkedinBtn = document.getElementById("linkedinLoginBtn");
+document
+    .getElementById("linkedinLoginBtn")
+    .addEventListener("click", function () {
 
-    console.log("Button found:", linkedinBtn);
+        window.open(
+            "http://127.0.0.1:8000/api/auth/linkedin/",
+            "LinkedInLogin",
+            "width=700,height=700"
+        );
 
-    if (linkedinBtn) {
-        linkedinBtn.addEventListener("click", function () {
+    });
 
-            alert("LinkedIn button clicked!");
+window.addEventListener("message", function(event){
 
-            window.location.href =
-                    "http://127.0.0.1:8000/api/auth/linkedin/";
-        });
+    if(event.data.type !== "linkedin_profile"){
+        return;
     }
 
+    const profile = event.data.profile;
+
+    document.getElementById("first_name").value =
+        profile.given_name || "";
+
+    document.getElementById("last_name").value =
+        profile.family_name || "";
+
+    document.getElementById("email_id").value =
+        profile.email || "";
+
+    document.getElementById("personal_linkedin_url").value =
+        profile.linkedin_url || "";
+
 });
+
 
 })();

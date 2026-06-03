@@ -20,7 +20,7 @@ from .serializers import (
     SMERegistrationSerializer
 )
 import logging
-
+from django.http import HttpResponse
 logger = logging.getLogger(__name__)
 
 def extract_text_from_pdf(file_obj):
@@ -311,7 +311,7 @@ def linkedin_callback(request):
             "code": code,
             "client_id": settings.LINKEDIN_CLIENT_ID,
             "client_secret": settings.LINKEDIN_CLIENT_SECRET,
-            "redirect_uri": settings.LINKEDIN_REDIRECT_URI
+            "redirect_uri": settings.LINKEDIN_REDIRECT_URI,
         }
     )
 
@@ -320,10 +320,9 @@ def linkedin_callback(request):
     access_token = token_data.get("access_token")
 
     if not access_token:
-        return JsonResponse({
-            "success": False,
-            "message": "Could not obtain access token"
-        })
+        return HttpResponse(
+            f"LinkedIn Error:<pre>{token_data}</pre>"
+        )
 
     profile_response = requests.get(
         "https://api.linkedin.com/v2/userinfo",
@@ -334,7 +333,23 @@ def linkedin_callback(request):
 
     profile = profile_response.json()
 
-    return JsonResponse({
-        "success": True,
-        "profile": profile
-    })
+    html = f"""
+    <script>
+    if (window.opener) {{
+        window.opener.postMessage(
+            {{
+                type: "linkedin_profile",
+                profile: {profile}
+            }},
+            "http://localhost:8080"
+        );
+
+        window.close();
+    }} else {{
+        document.body.innerHTML =
+            "<h2>Login successful but popup parent not found.</h2>";
+    }}
+    </script>
+    """
+
+    return HttpResponse(html)

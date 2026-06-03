@@ -33,7 +33,7 @@ body {
     color: #FFFFFF;
     font-size: 11px;
 }
-.top-bar a {
+.top-bar a { 
     color: #FFFFFF;
     transition: color 0.2s;
 }
@@ -46,8 +46,13 @@ body {
 }
 .top-social a:hover {
     color: var(--white);
+    font-size: 11px;
 }
-
+.topbar {
+    padding-left: 120px;
+    padding-right: 120px;
+    width: 100%;
+}
 /* ─── Header / Nav (Sticky) ─── */
 .sticky-header {
     position: sticky;
@@ -86,6 +91,20 @@ body {
 .login-btn:hover {
     background: var(--primary-light);
     color: var(--white) !important;
+}
+/* Mobile */
+.nav {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Desktop */
+@media (min-width: 992px) {
+    .nav {
+        padding-left: 120px;
+        padding-right: 120px;
+    }
 }
 
 /* ─── Services Dropdown ─── */
