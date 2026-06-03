@@ -207,7 +207,29 @@ body {
     color: rgba(255,255,255,0.85);
     font-size: 16px;
 }
+.hero-wrapper {
+    position: relative;
+}
 
+.hero-left-img {
+    position: absolute;
+    left: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    max-width: 250px; /* adjust as needed */
+    height: auto;
+    z-index: 2;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 3;
+}
+@media (max-width: 991px) {
+    .hero-left-img {
+        display: none;
+    }
+}
 /* ─── Form Container ─── */
 .login-container {
     padding: 50px 0 70px;
